@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e77824">
+  <meta name="description" content="Jan Awaaz is a citizen initiative for reporting public infrastructure problems.">
+  <title>Jan Awaaz | जन आवाज़</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a class="logo" href="#" aria-label="Jan Awaaz home"><span class="material-icons">campaign</span><span>जन आवाज़ <small>Jan Awaaz</small></span></a>
+    <div class="nav-actions">
+      <span id="user-handle" class="user-handle"></span>
+      <button id="lang-toggle" class="lang-toggle" type="button">English</button>
+      <button id="admin-link" class="admin-link" type="button" aria-label="Admin login"><span class="material-icons">admin_panel_settings</span></button>
+    </div>
+  </header>
+  <div class="tricolor-bar"></div>
+
+  <main>
+    <section id="feed-section" class="section active">
+      <div class="welcome-banner">
+        <div><span class="eyebrow" data-t="welcomeTag">आपकी आवाज़, आपका इलाका</span><h1 data-t="nearbyReports">📋 आस-पास की शिकायतें</h1><p data-t="welcomeLine">शहर और गाँव — सुरक्षित रास्ते, बेहतर सुविधाएँ।</p></div>
+        <span class="welcome-mark" aria-hidden="true">ॐ</span>
+      </div>
+      <div id="gemma-status" class="gemma-status offline"><span class="dot-indicator"></span>Gemma AI</div>
+      <div class="map-controls radius-controls" aria-label="Nearby distance">
+        <span class="control-label" data-t="radiusLabel">दूरी चुनें</span>
+        <button class="chip radius-chip active" data-radius="5" type="button">5 km</button>
+        <button class="chip radius-chip" data-radius="10" type="button">10 km</button>
+        <button class="chip radius-chip" data-radius="25" type="button">25 km</button>
+      </div>
+      <div class="search-bar">
+        <input id="search-input" type="search" data-t-placeholder="searchArea" placeholder="दूसरा इलाका खोजें..." aria-label="Search another area">
+        <button id="search-btn" type="button"><span class="material-icons">search</span><span data-t="search">खोजें</span></button>
+      </div>
+      <div id="map" role="application" aria-label="Nearby public issue map"></div>
+      <div id="reports-list" aria-live="polite"></div>
+    </section>
+
+    <section id="report-section" class="section">
+      <h1 class="section-title"><span class="material-icons">add_a_photo</span><span data-t="report">शिकायत करें</span></h1>
+      <div class="step-indicator" aria-label="Three reporting steps"><span class="step-dot active"></span><span class="step-dot"></span><span class="step-dot"></span></div>
+      <section id="report-step-1" class="report-step active">
+        <h2 class="step-title" data-t="step1Title">📸 फोटो लें</h2>
+        <p class="helper-text" data-t="cameraHelp">समस्या की साफ़ तस्वीर लें। गैलरी से फोटो नहीं जोड़ी जा सकती।</p>
+        <div class="camera-container">
+          <video id="camera-preview" autoplay playsinline muted aria-label="Live camera preview"></video>
+          <img id="captured-image" alt="Captured issue photo">
+        </div>
+        <div id="gps-indicator" class="gps-indicator"><span class="material-icons">gps_not_fixed</span><span data-t="gpsWait">GPS स्थान ले रहे हैं...</span></div>
+        <button id="capture-btn" class="btn-primary" type="button"><span class="material-icons">camera_alt</span><span data-t="captureBtn">फोटो खींचें</span></button>
+        <button id="recapture-btn" class="btn-secondary" type="button" style="display:none"><span class="material-icons">refresh</span><span data-t="recaptureBtn">दोबारा लें</span></button>
+        <button id="step1-next" class="btn-primary step-next" type="button" disabled><span data-t="nextBtn">आगे बढ़ें</span><span class="material-icons">arrow_forward</span></button>
+      </section>
+      <section id="report-step-2" class="report-step">
+        <h2 class="step-title" data-t="step2Title">📍 स्थान की पुष्टि करें</h2>
+        <div class="location-info">
+          <div id="location-address" class="location-address"><span class="material-icons">location_on</span> पता लोड हो रहा है...</div>
+          <div class="shop-chips-label" data-t="nearShop">किस दुकान के पास?</div>
+          <div id="shop-chips-container" class="shop-chips"></div>
+          <div class="shop-other"><label for="landmark-input" data-t="otherLandmark">अन्य लैंडमार्क (वैकल्पिक)</label>
+            <div class="landmark-input-group"><input id="landmark-input" type="text" maxlength="100" data-t-placeholder="otherLandmark" placeholder="अन्य लैंडमार्क (वैकल्पिक)"><button id="landmark-mic" class="mic-btn" type="button" aria-label="Voice input"><span class="material-icons">mic</span></button></div>
+          </div>
+        </div>
+        <div class="btn-row"><button id="step2-back" class="btn-secondary" type="button"><span class="material-icons">arrow_back</span><span data-t="backBtn">पीछे जाएं</span></button><button id="step2-next" class="btn-primary" type="button"><span data-t="nextBtn">आगे बढ़ें</span><span class="material-icons">arrow_forward</span></button></div>
+      </section>
+      <section id="report-step-3" class="report-step">
+        <h2 class="step-title" data-t="step3Title">🤖 AI विश्लेषण</h2>
+        <div class="analysis-card">
+          <div class="analysis-header"><span class="analysis-type-icon">🛠️</span><div><div id="analysis-type"></div><span id="analysis-severity" class="severity-badge medium"></span></div></div>
+          <p id="analysis-description" class="analysis-description"></p>
+          <label for="edit-description" data-t="editDesc">विवरण संपादित करें (वैकल्पिक)</label>
+          <textarea id="edit-description" class="edit-description" maxlength="600"></textarea>
+          <p class="helper-text" data-t="lockedHelp">समस्या का प्रकार, गंभीरता, फोटो और स्थान बदले नहीं जा सकते। विवरण साफ़ और तथ्यात्मक रखें।</p>
+        </div>
+        <div id="duplicate-warning" class="duplicate-warning hidden"><h4></h4><p></p><div id="duplicate-report"></div><button id="repost-btn" class="btn-secondary" type="button"></button></div>
+        <div class="btn-row"><button id="step3-back" class="btn-secondary" type="button"><span class="material-icons">arrow_back</span><span data-t="backBtn">पीछे जाएं</span></button><button id="submit-report-btn" class="btn-primary" type="button"><span data-t="submitBtn">✅ शिकायत दर्ज करें</span></button></div>
+      </section>
+    </section>
+
+    <section id="chatbot-section" class="section">
+      <h1 class="section-title"><span class="material-icons">support_agent</span><span data-t="assistantTitle">जन आवाज़ सहायक</span></h1>
+      <p class="helper-text" data-t="chatHelp">समस्या, जगह और जोखिम समझने के लिए हिंदी या English में लिखें या बोलें।</p>
+      <div class="chat-container">
+        <div id="chat-messages" aria-live="polite"></div>
+        <div id="chat-quick-replies"></div>
+        <div class="chat-input-bar"><input id="chat-input" type="text" maxlength="500" data-t-placeholder="chatPlaceholder" placeholder="अपनी समस्या बताएं..." aria-label="Message assistant"><button id="chat-mic-btn" class="mic-btn" type="button" aria-label="Speak"><span class="material-icons">mic</span></button><button id="chat-send-btn" type="button" aria-label="Send"><span class="material-icons">send</span></button></div>
+      </div>
+    </section>
+
+    <section id="profile-section" class="section">
+      <h1 class="section-title"><span class="material-icons">person</span><span data-t="profile">प्रोफाइल</span></h1>
+      <div class="profile-card"><div class="profile-avatar"><span class="material-icons">person</span></div><strong id="profile-handle"></strong><p class="helper-text" data-t="profilePrivacy">आपकी असली पहचान सार्वजनिक नहीं होती।</p>
+        <div class="profile-stats"><div class="stat-item"><div id="profile-report-count" class="stat-number">0</div><div class="stat-label">रिपोर्ट</div></div><div class="stat-item"><div id="profile-likes-count" class="stat-number">0</div><div class="stat-label">पसंद</div></div><div class="stat-item"><div id="profile-resolved-count" class="stat-number">0</div><div class="stat-label">सत्यापित</div></div></div>
+      </div>
+      <h2 class="section-title" data-t="myReports">मेरी शिकायतें</h2><div id="my-reports-list"></div>
+    </section>
+
+    <section id="admin-section" class="section">
+      <div id="admin-login-form" class="admin-login-card">
+        <h1><span class="material-icons">admin_panel_settings</span> <span data-t="adminLogin">🔐 एडमिन लॉगिन</span></h1>
+        <p class="helper-text">डेमो एडमिन पैनल — वास्तविक access control के लिए server login आवश्यक है।</p>
+        <form id="admin-login-form-fields">
+          <div class="form-group"><label for="admin-username" data-t="username">यूज़रनेम</label><input id="admin-username" name="username" autocomplete="username" required></div>
+          <div class="form-group"><label for="admin-password" data-t="password">पासवर्ड</label><input id="admin-password" name="password" type="password" autocomplete="current-password" required></div>
+          <button id="admin-login-btn" class="btn-primary" type="submit"><span class="material-icons">login</span><span data-t="login">लॉगिन</span></button>
+        </form>
+        <p class="demo-credentials"><strong>Demo:</strong> admin / janawaaz2024</p>
+      </div>
+      <div id="admin-dashboard" class="admin-dashboard">
+        <div class="admin-heading"><h1 class="section-title"><span class="material-icons">dashboard</span>Admin dashboard</h1><button id="admin-logout-btn" class="btn-secondary compact-btn" type="button" data-t="logout">लॉगआउट</button></div>
+        <div class="dashboard-stats">
+          <div class="stat-card"><span data-t="totalReports">कुल शिकायतें</span><strong id="admin-total">0</strong></div>
+          <div class="stat-card"><span data-t="solved">हल %</span><strong id="admin-solved">0%</strong></div>
+          <div class="stat-card"><span data-t="avgTime">औसत समय (दिन)</span><strong id="admin-avg-time">0</strong></div>
+          <div class="stat-card"><span data-t="activeReports">सक्रिय</span><strong id="admin-active">0</strong></div>
+        </div>
+        <div id="admin-map" aria-label="All reports admin map"></div>
+        <div class="admin-filters">
+          <select id="admin-type-filter" aria-label="Filter by issue type"><option value="all">All issue types</option><option value="pothole">Pothole</option><option value="broken_streetlight">Broken streetlight</option><option value="overflowing_drain">Overflowing drain</option><option value="burst_pipeline">Burst pipeline</option><option value="garbage">Garbage</option></select>
+          <select id="admin-severity-filter" aria-label="Filter by priority"><option value="all">All priorities</option><option value="high">High priority</option><option value="medium">Medium priority</option><option value="low">Low priority</option></select>
+          <select id="admin-status-filter" aria-label="Filter by status"><option value="all">All statuses</option><option value="reported">Reported</option><option value="in_progress">In Progress</option><option value="claimed_done">Claimed Done</option><option value="verified_done">Verified Done</option><option value="reopened">Reopened</option></select>
+        </div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Issue</th><th>Priority</th><th>Location</th><th>Status</th><th>Date</th><th>Activity</th><th>Demo status</th></tr></thead><tbody id="admin-table-body"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="nav-item active" data-tab="feed" type="button"><span class="material-icons">map</span><span data-t="home">होम</span></button>
+    <button class="nav-item" data-tab="chatbot" type="button"><span class="material-icons">support_agent</span><span data-t="help">मदद</span></button>
+    <button class="nav-item primary-action" data-tab="report" type="button"><span class="material-icons">add_a_photo</span><span data-t="report">शिकायत करें</span></button>
+    <button class="nav-item" data-tab="profile" type="button"><span class="material-icons">person</span><span data-t="profile">प्रोफाइल</span></button>
+  </nav>
+
+  <footer class="footer"><strong>जन आवाज़ | Jan Awaaz</strong><br><span data-t="citizenInitiative">यह एक नागरिक पहल है, सरकारी वेबसाइट नहीं</span><br><small data-t="demoOnly">डेमो · रिपोर्ट केवल इस डिवाइस पर सेव होती हैं</small></footer>
+
+  <div id="detail-modal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="detail-title"><div class="modal-header"><h3 id="detail-title" data-t="reportDetail">शिकायत विवरण</h3><button class="modal-close" type="button" aria-label="Close">×</button></div><div id="detail-modal-body" class="modal-body"></div></div></div>
+  <div id="claim-proof-modal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="claim-proof-title"><div class="modal-header"><h3 id="claim-proof-title">After photo proof</h3><button id="claim-proof-close" class="modal-close" type="button" aria-label="Close">×</button></div><div class="modal-body"><p class="helper-text">Take a live after photo at the reported location. GPS must be within 50 m.</p><div class="camera-container"><video id="claim-camera-preview" autoplay playsinline muted></video><img id="claim-captured-image" alt="Live after photo" style="display:none"></div><div id="claim-gps-indicator" class="gps-indicator">Waiting for a live GPS fix…</div><button id="claim-capture-btn" class="btn-primary" type="button" disabled><span class="material-icons">camera_alt</span>Capture after photo</button><div class="btn-row"><button id="claim-cancel-btn" class="btn-secondary" type="button">Cancel</button><button id="claim-confirm-btn" class="btn-green" type="button" disabled>Confirm claim</button></div></div></div></div>
+  <div id="loading-overlay" class="loading-overlay"><div class="loading-box"><div class="spinner"></div><p class="loading-text"></p></div></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script src="gemma.js"></script>
+  <script src="chatbot.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
